@@ -72,6 +72,25 @@ class OrderTest {
         }
     }
 
+    @Test
+    public void shouldChangeOrderStatusToConfirmedWhenConfirmingNotExpiredOrder() {
+        // give
+        Order order = new Order(clockMock);
 
+        Instant instantAtSubmission = Instant.parse("2000-01-01T10:00:00Z");
+        Instant instantAtConfirmationAfterExpiryTime = instantAtSubmission.plus(Order.VALID_PERIOD_HOURS, ChronoUnit.HOURS);
+
+        when(clockMock.getZone()).thenReturn(ZoneId.systemDefault());
+        when(clockMock.instant()).thenReturn(instantAtSubmission)
+                                 .thenReturn(instantAtConfirmationAfterExpiryTime);
+
+        Order.State expectedOrderState = Order.State.CONFIRMED;
+        // when
+        order.submit();
+        order.confirm();
+
+        // then
+        assertEquals(expectedOrderState, order.getOrderState());
+    }
 
 }
