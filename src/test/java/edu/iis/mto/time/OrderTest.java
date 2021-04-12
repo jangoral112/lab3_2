@@ -25,7 +25,7 @@ class OrderTest {
     private Clock clockMock;
 
     @Test
-    public void shouldThrowOrderExpiredExceptionWhenConfirmingxExpiredOrder() {
+    public void shouldThrowOrderExpiredExceptionWhenConfirmingExpiredOrder() {
         // give
         Order order = new Order(clockMock);
 
@@ -44,6 +44,29 @@ class OrderTest {
             // then
             fail("Exception OrderExpiredException not thrown");
         } catch (OrderExpiredException ignored) {}
+    }
+
+    @Test
+    public void shouldNotThrowOrderExpiredExceptionWhenConfirmingNotExpiredOrder() {
+        // give
+        Order order = new Order(clockMock);
+
+        Instant instantAtSubmission = Instant.parse("2000-01-01T10:00:00Z");
+        Instant instantAtConfirmationAfterExpiryTime = instantAtSubmission.plus(Order.VALID_PERIOD_HOURS, ChronoUnit.HOURS);
+
+        when(clockMock.getZone()).thenReturn(ZoneId.systemDefault());
+        when(clockMock.instant()).thenReturn(instantAtSubmission)
+                                 .thenReturn(instantAtConfirmationAfterExpiryTime);
+        // when
+        order.submit();
+
+        try {
+            order.confirm();
+
+            // then
+        } catch (OrderExpiredException ignored) {
+            fail("Exception OrderExpiredException thrown");
+        }
     }
 
     @Test
