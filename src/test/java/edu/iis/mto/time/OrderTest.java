@@ -25,7 +25,7 @@ class OrderTest {
     private Clock clockMock;
 
     @Test
-    public void shouldThrowOrderExpiredExceptionWhenOrderExpired() {
+    public void shouldThrowOrderExpiredExceptionWhenConfirmingxExpiredOrder() {
         // give
         Order order = new Order(clockMock);
 
@@ -45,5 +45,33 @@ class OrderTest {
             fail("Exception OrderExpiredException not thrown");
         } catch (OrderExpiredException ignored) {}
     }
+
+    @Test
+    public void shouldChangeOrderStatusToCanceledWhenConfirmingExpiredOrder() {
+        // give
+        Order order = new Order(clockMock);
+
+        Instant instantAtSubmission = Instant.parse("2000-01-01T10:00:00Z");
+        Instant instantAtConfirmationAfterExpiryTime = instantAtSubmission.plus(Order.VALID_PERIOD_HOURS + 1, ChronoUnit.HOURS);
+
+        when(clockMock.getZone()).thenReturn(ZoneId.systemDefault());
+        when(clockMock.instant()).thenReturn(instantAtSubmission)
+                                 .thenReturn(instantAtConfirmationAfterExpiryTime);
+
+        Order.State expectedOrderState = Order.State.CANCELLED;
+        // when
+        order.submit();
+
+        try {
+            order.confirm();
+
+            // then
+            fail("Exception OrderExpiredException not thrown");
+        } catch (OrderExpiredException ignored) {
+            assertEquals(expectedOrderState, order.getOrderState());
+        }
+    }
+
+
 
 }
